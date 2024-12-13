@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -42,9 +43,32 @@ namespace Minsk
 
         public void Run()
         {
+            var tempText = true;
+            string text = "";
+            string previousFilePath = "";
+
             while (true)
             {
-                var text = EditSubmission();
+                if (tempText)
+                {
+                    Console.Write(">>");
+                    var filePath = Console.ReadLine();
+
+                    if (filePath != "")
+                    {
+                        text = File.ReadAllText(filePath);
+                        previousFilePath = filePath;
+                    }
+                    else
+                    {
+                        text = File.ReadAllText(previousFilePath);
+                    }
+                }
+                else
+                {
+                    text = EditSubmission();
+                }
+
                 if (string.IsNullOrEmpty(text))
                     continue;
 
@@ -195,39 +219,51 @@ namespace Minsk
                     case ConsoleKey.Escape:
                         HandleEscape(document, view);
                         break;
+
                     case ConsoleKey.Enter:
                         HandleEnter(document, view);
                         break;
+
                     case ConsoleKey.LeftArrow:
                         HandleLeftArrow(document, view);
                         break;
+
                     case ConsoleKey.RightArrow:
                         HandleRightArrow(document, view);
                         break;
+
                     case ConsoleKey.UpArrow:
                         HandleUpArrow(document, view);
                         break;
+
                     case ConsoleKey.DownArrow:
                         HandleDownArrow(document, view);
                         break;
+
                     case ConsoleKey.Backspace:
                         HandleBackspace(document, view);
                         break;
+
                     case ConsoleKey.Delete:
                         HandleDelete(document, view);
                         break;
+
                     case ConsoleKey.Home:
                         HandleHome(document, view);
                         break;
+
                     case ConsoleKey.End:
                         HandleEnd(document, view);
                         break;
+
                     case ConsoleKey.Tab:
                         HandleTab(document, view);
                         break;
+
                     case ConsoleKey.PageUp:
                         HandlePageUp(document, view);
                         break;
+
                     case ConsoleKey.PageDown:
                         HandlePageDown(document, view);
                         break;
@@ -568,7 +604,6 @@ namespace Minsk
                     Console.Out.WriteSpace();
                     for (int _ = 0; _ < maxNameLength; _++)
                         Console.Out.WriteSpace();
-
                 }
                 Console.Out.WriteSpace();
                 Console.Out.WriteSpace();

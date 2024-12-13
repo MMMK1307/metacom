@@ -136,10 +136,15 @@ namespace Minsk.CodeAnalysis.Syntax
                 {
                     case SyntaxKind.WhitespaceTrivia:
                         continue;
-                    case SyntaxKind.EqualsEqualsToken:
+                    case SyntaxKind.EqualsToken:
                         return ParseGlobalStatement();
 
                     case SyntaxKind.OpenParenthesisToken:
+                        var dh = Peek(i - 1);
+                        if (Peek(i - 1).Kind != SyntaxKind.IdentifierToken)
+                        {
+                            return ParseGlobalStatement();
+                        }
                         return ParseFunctionDeclaration();
                 }
             }
@@ -167,17 +172,33 @@ namespace Minsk.CodeAnalysis.Syntax
             }
         }
 
+        private SyntaxToken ParseOptionAccessModifier()
+        {
+            switch (Current.Kind)
+            {
+                case SyntaxKind.PrivateKeyword:
+                case SyntaxKind.PublicKeyword:
+                case SyntaxKind.SealedKeyword:
+                case SyntaxKind.StaticKeyword:
+                    return Current;
+
+                default:
+                    return new SyntaxToken(Current.SyntaxTree, SyntaxKind.PublicKeyword, Current.Position, "public", "", Current.LeadingTrivia, Current.TrailingTrivia);
+            }
+        }
+
         private MemberSyntax ParseFunctionDeclaration()
         {
             //var functionKeyword = MatchToken(SyntaxKind.FunctionKeyword);
+            var access = ParseOptionAccessModifier();
+            var type = ParseOptionalTypeClause();
             var functionKeyword = MatchFunctionDeclarationToken();
             var identifier = MatchToken(SyntaxKind.IdentifierToken);
             var openParenthesisToken = MatchToken(SyntaxKind.OpenParenthesisToken);
             var parameters = ParseParameterList();
             var closeParenthesisToken = MatchToken(SyntaxKind.CloseParenthesisToken);
-            var type = ParseOptionalTypeClause();
             var body = ParseBlockStatement();
-            return new FunctionDeclarationSyntax(_syntaxTree, functionKeyword, identifier, openParenthesisToken, parameters, closeParenthesisToken, type, body);
+            return new FunctionDeclarationSyntax(_syntaxTree, functionKeyword, identifier, openParenthesisToken, parameters, closeParenthesisToken, type, body, access);
         }
 
         private SeparatedSyntaxList<ParameterSyntax> ParseParameterList()
@@ -209,6 +230,7 @@ namespace Minsk.CodeAnalysis.Syntax
         private ParameterSyntax ParseParameter()
         {
             var type = ParseTypeClause();
+            NextToken();
             var identifier = MatchToken(SyntaxKind.IdentifierToken);
             return new ParameterSyntax(_syntaxTree, identifier, type);
         }
@@ -231,6 +253,8 @@ namespace Minsk.CodeAnalysis.Syntax
                 case SyntaxKind.IntKeyword:
                 case SyntaxKind.FloatKeyword:
                 case SyntaxKind.StringKeyword:
+                case SyntaxKind.ListKeyword:
+                case SyntaxKind.DictionaryKeyword:
                     return ParseVariableDeclaration();
 
                 case SyntaxKind.IfKeyword:
@@ -298,26 +322,56 @@ namespace Minsk.CodeAnalysis.Syntax
                 SyntaxKind.StringKeyword => SyntaxKind.StringKeyword,
                 SyntaxKind.VarKeyword => SyntaxKind.VarKeyword,
                 SyntaxKind.LetKeyword => SyntaxKind.LetKeyword,
+                SyntaxKind.ListKeyword => SyntaxKind.ListKeyword,
+                SyntaxKind.DictionaryKeyword => SyntaxKind.DictionaryKeyword,
                 _ => SyntaxKind.VarKeyword,
             };
         }
 
+        private AdditionalTypeSyntax? ParseOptionalAdditionalType()
+        {
+            NextToken();
+            if (Current.Kind != SyntaxKind.LessToken)
+            {
+                return null;
+            }
+            var done = false;
+            List<SyntaxNode> types = new List<SyntaxNode>();
+            NextToken();
+
+            while (!done)
+            {
+                var type = Current.Kind;
+                var node = new SyntaxToken(_syntaxTree, type, Current.Position, "", "", Current.LeadingTrivia, Current.TrailingTrivia);
+                types.Add(node);
+                NextToken();
+                if (Current.Kind == SyntaxKind.GreaterToken)
+                {
+                    done = true;
+                }
+            }
+
+            return new AdditionalTypeSyntax(_syntaxTree, new SeparatedSyntaxList<SyntaxToken>(types.ToImmutableArray()));
+        }
+
         private StatementSyntax ParseVariableDeclaration()
         {
+            var typeClause = ParseOptionalTypeClause();
             var expected = GetExpectedVariableKind();
+            var additionalTypes = ParseOptionalAdditionalType();
+            if (additionalTypes != null)
+            {
+                expected = SyntaxKind.GreaterToken;
+            }
             var keyword = MatchToken(expected);
             var identifier = MatchToken(SyntaxKind.IdentifierToken);
-            var typeClause = ParseOptionalTypeClause();
             var equals = MatchToken(SyntaxKind.EqualsToken);
             var initializer = ParseExpression();
-            return new VariableDeclarationSyntax(_syntaxTree, keyword, identifier, typeClause, equals, initializer);
+            return new VariableDeclarationSyntax(_syntaxTree, keyword, identifier, typeClause, equals, initializer, additionalTypes);
         }
 
         private TypeClauseSyntax? ParseOptionalTypeClause()
         {
-            if (Current.Kind != SyntaxKind.ColonToken)
-                return null;
-
             return ParseTypeClause();
         }
 
@@ -329,7 +383,9 @@ namespace Minsk.CodeAnalysis.Syntax
                 case SyntaxKind.FloatKeyword:
                 case SyntaxKind.StringKeyword:
                 case SyntaxKind.FunctionKeyword:
-                    return NextToken();
+                case SyntaxKind.ListKeyword:
+                case SyntaxKind.DictionaryKeyword:
+                    return Current;
 
                 default:
                     return MatchToken(SyntaxKind.IdentifierToken);
@@ -530,19 +586,38 @@ namespace Minsk.CodeAnalysis.Syntax
 
         private ExpressionSyntax ParseNameOrCallExpression()
         {
-            if (Peek(0).Kind == SyntaxKind.IdentifierToken && Peek(1).Kind == SyntaxKind.OpenParenthesisToken)
+            if (Peek(0).Kind == SyntaxKind.IdentifierToken && (Peek(1).Kind == SyntaxKind.OpenParenthesisToken || Peek(1).Kind == SyntaxKind.PeriodToken))
                 return ParseCallExpression();
 
             return ParseNameExpression();
         }
 
+        private SeparatedSyntaxList<SyntaxToken>? ParseInnerMembers()
+        {
+            var innerMembers = new List<SyntaxNode>();
+            while (Current.Kind == SyntaxKind.PeriodToken)
+            {
+                NextToken();
+                innerMembers.Add(Current);
+            }
+
+            if (innerMembers is null)
+            {
+                return null;
+            }
+            NextToken();
+
+            return new SeparatedSyntaxList<SyntaxToken>(innerMembers.ToImmutableArray());
+        }
+
         private ExpressionSyntax ParseCallExpression()
         {
             var identifier = MatchToken(SyntaxKind.IdentifierToken);
+            var members = ParseInnerMembers();
             var openParenthesisToken = MatchToken(SyntaxKind.OpenParenthesisToken);
             var arguments = ParseArguments();
             var closeParenthesisToken = MatchToken(SyntaxKind.CloseParenthesisToken);
-            return new CallExpressionSyntax(_syntaxTree, identifier, openParenthesisToken, arguments, closeParenthesisToken);
+            return new CallExpressionSyntax(_syntaxTree, identifier, openParenthesisToken, arguments, closeParenthesisToken, members);
         }
 
         private SeparatedSyntaxList<ExpressionSyntax> ParseArguments()

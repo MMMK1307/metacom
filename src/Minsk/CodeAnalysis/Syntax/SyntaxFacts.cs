@@ -115,6 +115,27 @@ namespace Minsk.CodeAnalysis.Syntax
                 case "do":
                     return SyntaxKind.DoKeyword;
 
+                case "public":
+                    return SyntaxKind.PublicKeyword;
+
+                case "private":
+                    return SyntaxKind.PrivateKeyword;
+
+                case "sealed":
+                    return SyntaxKind.SealedKeyword;
+
+                case "static":
+                    return SyntaxKind.StaticKeyword;
+
+                case "List":
+                    return SyntaxKind.ListKeyword;
+
+                case "Dictionary":
+                    return SyntaxKind.DictionaryKeyword;
+
+                case "ContainsKey":
+                    return SyntaxKind.ContainsKeyCall;
+
                 default:
                     return SyntaxKind.IdentifierToken;
             }

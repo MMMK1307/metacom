@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-
+using MetaCompiler;
 using Minsk.CodeAnalysis;
 using Minsk.CodeAnalysis.Authoring;
 using Minsk.CodeAnalysis.Symbols;
@@ -185,10 +185,12 @@ namespace Minsk
         protected override void EvaluateSubmission(string text)
         {
             var syntaxTree = SyntaxTree.Parse(text);
-            //var compilation = Compilation.CreateScript(_previous, syntaxTree);
+            var compilation = Compilation.CreateScript(_previous, syntaxTree);
 
-            if (_showTree)
-                syntaxTree.Root.WriteTo(Console.Out);
+            // if (_showTree)
+            syntaxTree.Root.WriteTo(Console.Out);
+
+            var d = Translator.Translate(compilation);
 
             //if (_showProgram)
             //    compilation.EmitTree(Console.Out);

@@ -6,6 +6,7 @@ namespace Minsk.CodeAnalysis.Syntax
 
         // Trivia
         SkippedTextTrivia,
+
         LineBreakTrivia,
         WhitespaceTrivia,
         SingleLineCommentTrivia,
@@ -13,6 +14,7 @@ namespace Minsk.CodeAnalysis.Syntax
 
         // Tokens
         EndOfFileToken,
+
         NumberToken,
         StringToken,
         PlusToken,
@@ -50,6 +52,7 @@ namespace Minsk.CodeAnalysis.Syntax
 
         // Keywords
         BreakKeyword,
+
         ContinueKeyword,
         ElseKeyword,
         FalseKeyword,
@@ -66,6 +69,7 @@ namespace Minsk.CodeAnalysis.Syntax
 
         // Nodes
         CompilationUnit,
+
         FunctionDeclaration,
         GlobalStatement,
         Parameter,
@@ -74,6 +78,7 @@ namespace Minsk.CodeAnalysis.Syntax
 
         // Statements
         BlockStatement,
+
         VariableDeclaration,
         IfStatement,
         WhileStatement,
@@ -86,6 +91,7 @@ namespace Minsk.CodeAnalysis.Syntax
 
         // Expressions
         LiteralExpression,
+
         NameExpression,
         UnaryExpression,
         BinaryExpression,
@@ -96,5 +102,16 @@ namespace Minsk.CodeAnalysis.Syntax
         IntKeyword,
         FloatKeyword,
         StringKeyword,
+        PublicKeyword,
+        PrivateKeyword,
+        SealedKeyword,
+        StaticKeyword,
+        ListKeyword,
+        DictionaryKeyword,
+        OpenSquareBracket,
+        CloseSquareBracket,
+        ContainsKeyCall,
+        PeriodToken,
+        NewKeyword,
     }
 }

@@ -293,6 +293,18 @@ namespace Minsk.CodeAnalysis.Syntax
                     _kind = SyntaxKind.CloseBraceToken;
                     _position++;
                     break;
+                case '[':
+                    _kind = SyntaxKind.OpenSquareBracket;
+                    _position++;
+                    break;
+                case '.':
+                    _kind = SyntaxKind.PeriodToken;
+                    _position++;
+                    break;
+                case ']':
+                    _kind = SyntaxKind.CloseSquareBracket;
+                    _position++;
+                    break;
                 case ':':
                     _kind = SyntaxKind.ColonToken;
                     _position++;
@@ -402,8 +414,16 @@ namespace Minsk.CodeAnalysis.Syntax
                 case '"':
                     ReadString();
                     break;
-                case '0': case '1': case '2': case '3': case '4':
-                case '5': case '6': case '7': case '8': case '9':
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
                     ReadNumber();
                     break;
                 case '_':

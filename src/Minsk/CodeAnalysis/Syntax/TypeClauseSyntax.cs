@@ -13,4 +13,16 @@ namespace Minsk.CodeAnalysis.Syntax
         public SyntaxToken ColonToken { get; }
         public SyntaxToken Identifier { get; }
     }
+
+    public sealed partial class AdditionalTypeSyntax : SyntaxNode
+    {
+        internal AdditionalTypeSyntax(SyntaxTree syntaxTree, SeparatedSyntaxList<SyntaxToken> identifiers)
+            : base(syntaxTree)
+        {
+            Identifiers = identifiers;
+        }
+
+        public override SyntaxKind Kind => SyntaxKind.TypeClause;
+        public SeparatedSyntaxList<SyntaxToken> Identifiers { get; }
+    }
 }

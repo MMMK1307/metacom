@@ -2,9 +2,10 @@ namespace Minsk.CodeAnalysis.Syntax
 {
     public sealed partial class FunctionDeclarationSyntax : MemberSyntax
     {
-        internal FunctionDeclarationSyntax(SyntaxTree syntaxTree, SyntaxToken functionKeyword, SyntaxToken identifier, SyntaxToken openParenthesisToken, SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeParenthesisToken, TypeClauseSyntax? type, BlockStatementSyntax body)
+        internal FunctionDeclarationSyntax(SyntaxTree syntaxTree, SyntaxToken functionKeyword, SyntaxToken identifier, SyntaxToken openParenthesisToken, SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeParenthesisToken, TypeClauseSyntax? type, BlockStatementSyntax body, SyntaxToken accessMod)
             : base(syntaxTree)
         {
+            AccessModifier = accessMod;
             FunctionKeyword = functionKeyword;
             Identifier = identifier;
             OpenParenthesisToken = openParenthesisToken;
@@ -15,7 +16,7 @@ namespace Minsk.CodeAnalysis.Syntax
         }
 
         public override SyntaxKind Kind => SyntaxKind.FunctionDeclaration;
-
+        public SyntaxToken AccessModifier { get; }
         public SyntaxToken FunctionKeyword { get; }
         public SyntaxToken Identifier { get; }
         public SyntaxToken OpenParenthesisToken { get; }

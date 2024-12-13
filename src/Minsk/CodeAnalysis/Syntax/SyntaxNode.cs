@@ -71,8 +71,8 @@ namespace Minsk.CodeAnalysis.Syntax
         {
             PrettyPrint(writer, this);
         }
-
         private static void PrettyPrint(TextWriter writer, SyntaxNode node, string indent = "", bool isLast = true)
+
         {
             var isToConsole = writer == Console.Out;
             var token = node as SyntaxToken;

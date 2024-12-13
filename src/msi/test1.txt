@@ -1,0 +1,5 @@
+string d = 0;
+
+string d () {
+    return
+}

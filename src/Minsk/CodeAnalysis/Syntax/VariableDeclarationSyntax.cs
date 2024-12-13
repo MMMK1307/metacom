@@ -2,7 +2,7 @@ namespace Minsk.CodeAnalysis.Syntax
 {
     public sealed partial class VariableDeclarationSyntax : StatementSyntax
     {
-        internal VariableDeclarationSyntax(SyntaxTree syntaxTree, SyntaxToken keyword, SyntaxToken identifier, TypeClauseSyntax? typeClause, SyntaxToken equalsToken, ExpressionSyntax initializer)
+        internal VariableDeclarationSyntax(SyntaxTree syntaxTree, SyntaxToken keyword, SyntaxToken identifier, TypeClauseSyntax? typeClause, SyntaxToken equalsToken, ExpressionSyntax initializer, AdditionalTypeSyntax aditionalType)
             : base(syntaxTree)
         {
             Keyword = keyword;
@@ -10,6 +10,7 @@ namespace Minsk.CodeAnalysis.Syntax
             TypeClause = typeClause;
             EqualsToken = equalsToken;
             Initializer = initializer;
+            AditionalType = aditionalType;
         }
 
         public override SyntaxKind Kind => SyntaxKind.VariableDeclaration;
@@ -18,5 +19,6 @@ namespace Minsk.CodeAnalysis.Syntax
         public TypeClauseSyntax? TypeClause { get; }
         public SyntaxToken EqualsToken { get; }
         public ExpressionSyntax Initializer { get; }
+        public AdditionalTypeSyntax? AditionalType { get; }
     }
 }

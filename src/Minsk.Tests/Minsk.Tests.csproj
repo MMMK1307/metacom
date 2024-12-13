@@ -16,4 +16,10 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="CSharp\Result\" />
+    <Folder Include="CSharp\Source\" />
+    <Folder Include="Metacom\Java\Result\" />
+  </ItemGroup>
+
 </Project>
