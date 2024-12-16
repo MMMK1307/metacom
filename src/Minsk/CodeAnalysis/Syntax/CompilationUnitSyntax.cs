@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace Minsk.CodeAnalysis.Syntax
@@ -14,5 +16,10 @@ namespace Minsk.CodeAnalysis.Syntax
         public override SyntaxKind Kind => SyntaxKind.CompilationUnit;
         public ImmutableArray<MemberSyntax> Members { get; }
         public SyntaxToken EndOfFileToken { get; }
+
+        public override IEnumerable<SyntaxNode> GetChildren()
+        {
+            return Array.Empty<SyntaxNode>();
+        }
     }
 }

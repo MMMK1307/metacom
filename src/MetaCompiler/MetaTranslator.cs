@@ -4,13 +4,36 @@ namespace Metacom
 {
     public class MetaTranslator
     {
+        public static string TranslateSyntax(SyntaxToken token)
+        {
+            var translatedText = TranslateSyntaxToken(token.Kind);
+
+            if (translatedText == "")
+                return TranslateIdentifierToken(token);
+
+            return translatedText;
+        }
+
+        public static string TranslateIdentifierToken(SyntaxToken token)
+        {
+            return token.Text switch
+            {
+                "Math" => "Math",
+                "Max" => "max",
+                "Length" => "length",
+                _ => token.Text
+            };
+        }
+
         public static string TranslateSyntaxToken(SyntaxKind? kind)
         {
             return kind switch
             {
                 SyntaxKind.PlusToken => "+",
+                SyntaxKind.PlusPlusToken => "++",
                 SyntaxKind.PlusEqualsToken => "+=",
                 SyntaxKind.MinusToken => "-",
+                SyntaxKind.MinusMinusToken => "--",
                 SyntaxKind.MinusEqualsToken => "-=",
                 SyntaxKind.StarToken => "*",
                 SyntaxKind.StarEqualsToken => "*=",
@@ -54,6 +77,7 @@ namespace Metacom
                 SyntaxKind.IntKeyword => "int",
                 SyntaxKind.FloatKeyword => "float",
                 SyntaxKind.StringKeyword => "String",
+                SyntaxKind.DoubleKeyword => "double",
                 SyntaxKind.WhileKeyword => "while",
                 SyntaxKind.DoKeyword => "do",
                 SyntaxKind.PublicKeyword => "public",
@@ -64,6 +88,7 @@ namespace Metacom
                 SyntaxKind.DictionaryKeyword => "HashMap",
                 SyntaxKind.CloseSquareBracket => "]",
                 SyntaxKind.ContainsKeyCall => "containsKey",
+                SyntaxKind.NewKeyword => "new",
                 _ => "",
             };
         }

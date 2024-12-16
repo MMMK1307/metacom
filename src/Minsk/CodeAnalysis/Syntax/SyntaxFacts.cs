@@ -130,11 +130,20 @@ namespace Minsk.CodeAnalysis.Syntax
                 case "List":
                     return SyntaxKind.ListKeyword;
 
+                case "double":
+                    return SyntaxKind.DoubleKeyword;
+
                 case "Dictionary":
                     return SyntaxKind.DictionaryKeyword;
 
                 case "ContainsKey":
                     return SyntaxKind.ContainsKeyCall;
+
+                case "new":
+                    return SyntaxKind.NewKeyword;
+
+                case "Length":
+                    return SyntaxKind.LengthKeywordCall;
 
                 default:
                     return SyntaxKind.IdentifierToken;

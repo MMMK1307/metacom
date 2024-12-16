@@ -249,37 +249,46 @@ namespace Minsk.CodeAnalysis
                     if (firstStatement != null)
                         ReportUnreachableCode(firstStatement);
                     return;
+
                 case SyntaxKind.VariableDeclaration:
                     ReportUnreachableCode(((VariableDeclarationSyntax)node).Keyword.Location);
                     return;
+
                 case SyntaxKind.IfStatement:
                     ReportUnreachableCode(((IfStatementSyntax)node).IfKeyword.Location);
                     return;
+
                 case SyntaxKind.WhileStatement:
                     ReportUnreachableCode(((WhileStatementSyntax)node).WhileKeyword.Location);
                     return;
+
                 case SyntaxKind.DoWhileStatement:
                     ReportUnreachableCode(((DoWhileStatementSyntax)node).DoKeyword.Location);
                     return;
-                case SyntaxKind.ForStatement:
-                    ReportUnreachableCode(((ForStatementSyntax)node).Keyword.Location);
-                    return;
+                //case SyntaxKind.ForStatement:
+                //    ReportUnreachableCode(((ForStatementSyntax)node).Keyword.Location);
+                //    return;
                 case SyntaxKind.BreakStatement:
                     ReportUnreachableCode(((BreakStatementSyntax)node).Keyword.Location);
                     return;
+
                 case SyntaxKind.ContinueStatement:
                     ReportUnreachableCode(((ContinueStatementSyntax)node).Keyword.Location);
                     return;
+
                 case SyntaxKind.ReturnStatement:
                     ReportUnreachableCode(((ReturnStatementSyntax)node).ReturnKeyword.Location);
                     return;
+
                 case SyntaxKind.ExpressionStatement:
                     var expression = ((ExpressionStatementSyntax)node).Expression;
                     ReportUnreachableCode(expression);
                     return;
+
                 case SyntaxKind.CallExpression:
                     ReportUnreachableCode(((CallExpressionSyntax)node).Identifier.Location);
                     return;
+
                 default:
                     throw new Exception($"Unexpected syntax {node.Kind}");
             }

@@ -113,5 +113,14 @@ namespace Minsk.CodeAnalysis.Syntax
         ContainsKeyCall,
         PeriodToken,
         NewKeyword,
+        NewExpression,
+        ArrayAccessExpression,
+        ArrayDeclarationExpression,
+        LengthKeywordCall,
+        NullKeyword,
+        PlusPlusToken,
+        SingleExpression,
+        MinusMinusToken,
+        DoubleKeyword,
     }
 }

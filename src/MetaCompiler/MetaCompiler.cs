@@ -44,14 +44,14 @@ namespace MetaCompiler
 
                         if (member is FunctionDeclarationSyntax)
                         {
-                            TranslateFunctionDeclaration((member as FunctionDeclarationSyntax));
+                            TranslateFunctionDeclaration((member as FunctionDeclarationSyntax)!);
                         }
                         break;
 
                     default:
                         if (member is GlobalStatementSyntax)
                         {
-                            TranslateGlobalDeclaration(member as GlobalStatementSyntax);
+                            TranslateGlobalDeclaration((member as GlobalStatementSyntax)!);
                             _translationBuilder.Append(";");
                         }
                         break;
@@ -63,18 +63,31 @@ namespace MetaCompiler
 
         private void TranslateFunctionDeclaration(FunctionDeclarationSyntax member)
         {
-            WriteFunctionDeclaration(accessMod: member.AccessModifier, identifier: member.Identifier, type: member.Type?.Identifier);
+            WriteFunctionDeclaration(accessMod: member.AccessModifier, identifier: member.Identifier, type: member.Type);
             WriteFunctionParameters(member.Parameters);
             WriteBlockStatement(member.Body);
             return;
         }
 
-        private void WriteFunctionDeclaration(SyntaxToken accessMod, SyntaxToken identifier, SyntaxToken? type)
+        private void WriteFunctionDeclaration(SyntaxToken accessMod, SyntaxToken identifier, TypeClauseSyntax? type)
         {
             //_translationBuilder.AppendLine($"{1} {0} ({2}) \n {{\treturn\n}}", identifier, type, parameters);
-            var stType = MetaTranslator.TranslateSyntaxToken(type.Kind);
-            var access = MetaTranslator.TranslateSyntaxToken(accessMod.Kind);
-            _translationBuilder.Append($"{access} {stType} {identifier.Text}");
+            _translationBuilder.Append($"{MetaTranslator.TranslateSyntaxToken(accessMod.Kind)} ");
+            WriteDeclarationType(type);
+            _translationBuilder.Append($"{identifier.Text}");
+        }
+
+        private void WriteDeclarationType(TypeClauseSyntax? typeClause)
+        {
+            if (typeClause == null)
+                return;
+
+            var type = MetaTranslator.TranslateSyntaxToken(typeClause.Identifier.Kind);
+            _translationBuilder.Append($"{type}");
+            if (typeClause.IsList)
+            {
+                _translationBuilder.Append("[] ");
+            }
         }
 
         private void WriteFunctionParameters(SeparatedSyntaxList<ParameterSyntax> parameters)
@@ -86,19 +99,25 @@ namespace MetaCompiler
                 if (i != 0)
                     _translationBuilder.Append(", ");
 
-                _translationBuilder.Append($"{MetaTranslator.TranslateSyntaxToken(parameters[i].Type.Identifier.Kind)} {parameters[i].Identifier.Text}");
+                WriteDeclarationType(parameters[i].Type);
+
+                _translationBuilder.Append($" {parameters[i].Identifier.Text}");
             }
             _translationBuilder.Append(")");
         }
 
         private void WriteBlockStatement(BlockStatementSyntax body)
         {
-            _translationBuilder.AppendLine("{");
+            _translationBuilder.Append("{\n");
             for (int i = 0; i < body.Statements.Length; i++)
             {
                 WriteStatement(body.Statements[i]);
+                var t = _translationBuilder[_translationBuilder.Length - 1];
+                if (t != '}')
+                    _translationBuilder.Append(";");
+                _translationBuilder.Append("\n");
             }
-            _translationBuilder.AppendLine("\n}");
+            _translationBuilder.Append("\n}");
         }
 
         private void WriteStatement(StatementSyntax statement)
@@ -125,9 +144,44 @@ namespace MetaCompiler
                     WriteBlockStatement(statement as BlockStatementSyntax);
                     return;
 
+                case SyntaxKind.ReturnStatement:
+                    WriteReturnStatement((statement as ReturnStatementSyntax)!);
+                    return;
+
+                case SyntaxKind.ForStatement:
+                    WriteForStatement((statement as ForStatementSyntax)!);
+                    return;
+
                 default:
                     return;
             }
+        }
+
+        private void WriteForStatement(ForStatementSyntax statement)
+        {
+            var forKeyword = MetaTranslator.TranslateSyntaxToken(statement.Keyword.Kind);
+            _translationBuilder.Append(forKeyword);
+            _translationBuilder.Append("(");
+            WriteStatement(statement.Declaration);
+            _translationBuilder.Append("; ");
+            WriteExpression(statement.Condition);
+            _translationBuilder.Append("; ");
+            WriteExpression(statement.Modifier);
+            _translationBuilder.Append(")");
+            WriteStatement(statement.Body);
+        }
+
+        private void WriteReturnStatement(ReturnStatementSyntax statement)
+        {
+            var returnKeyword = MetaTranslator.TranslateSyntaxToken(statement.ReturnKeyword.Kind);
+
+            _translationBuilder.Append($"{returnKeyword} ");
+
+            if (statement.Expression is null)
+                return;
+
+            WriteExpression(statement.Expression);
+            _translationBuilder.Append(";");
         }
 
         private void WriteIfStatement(IfStatementSyntax ifStatement)
@@ -177,9 +231,7 @@ namespace MetaCompiler
 
         private void WriteVariableDeclaration(VariableDeclarationSyntax variableDeclaration)
         {
-            var type = MetaTranslator.TranslateSyntaxToken(variableDeclaration.TypeClause?.Identifier.Kind);
-
-            _translationBuilder.Append($"{type}");
+            WriteDeclarationType(variableDeclaration.TypeClause);
             WriteAdditionalType(additionalType: variableDeclaration.AditionalType);
             _translationBuilder.Append($" {variableDeclaration.Identifier.Text} = ");
             WriteExpression(variableDeclaration.Initializer);
@@ -202,11 +254,53 @@ namespace MetaCompiler
             if (expression is UnaryExpressionSyntax)
                 WriteUnaryExpression((expression as UnaryExpressionSyntax)!);
 
+            if (expression is SingleExpressionSyntax)
+                WriteSingleExpression((expression as SingleExpressionSyntax)!);
+
             if (expression is AssignmentExpressionSyntax)
                 WriteAssignmentExpression((expression as AssignmentExpressionSyntax)!);
 
             if (expression is ParenthesizedExpressionSyntax)
                 WriteParenthesizedExpression((expression as ParenthesizedExpressionSyntax)!);
+
+            if (expression is NewExpressionSyntax)
+                WriteNewExpression((expression as NewExpressionSyntax)!);
+
+            if (expression is ArrayDeclarationExpression)
+                WriteArrayDeclarationExpression((expression as ArrayDeclarationExpression)!);
+
+            if (expression is ArrayAccessExpression)
+                WriteArrayAccessExpression((expression as ArrayAccessExpression)!);
+        }
+
+        private void WriteArrayAccessExpression(ArrayAccessExpression expression)
+        {
+            _translationBuilder.Append(expression.Identifier.Text);
+            _translationBuilder.Append("[");
+            WriteExpression(expression.Expression);
+            _translationBuilder.Append("]");
+        }
+
+        private void WriteSingleExpression(SingleExpressionSyntax expression)
+        {
+            var identifier = MetaTranslator.TranslateSyntax(expression.Identifier);
+            _translationBuilder.Append(identifier);
+            _translationBuilder.Append(MetaTranslator.TranslateSyntax(expression.Operator));
+        }
+
+        private void WriteArrayDeclarationExpression(ArrayDeclarationExpression expression)
+        {
+            var typeKeyword = MetaTranslator.TranslateSyntaxToken(expression.Type.Kind);
+            _translationBuilder.Append($"{typeKeyword}[");
+            WriteExpression(expression.Expression);
+            _translationBuilder.Append("]");
+        }
+
+        private void WriteNewExpression(NewExpressionSyntax expression)
+        {
+            var newKeyword = MetaTranslator.TranslateSyntaxToken(expression.NewKeyword.Kind);
+            _translationBuilder.Append($"{newKeyword} ");
+            WriteExpression(expression.Expression);
         }
 
         private void WriteUnaryExpression(UnaryExpressionSyntax expression)
@@ -239,7 +333,13 @@ namespace MetaCompiler
 
         private void WriteNameExpression(NameExpressionSyntax expression)
         {
+            var identifierToken = MetaTranslator.TranslateSyntax(expression.IdentifierToken);
             _translationBuilder.Append(expression.IdentifierToken.Text);
+
+            if (expression.InnerMembers.Count < 1)
+                return;
+
+            WriteCallExpressionMembers(expression.InnerMembers);
         }
 
         private void WriteBinaryExpression(BinaryExpressionSyntax expression)
@@ -262,6 +362,8 @@ namespace MetaCompiler
         {
             for (int i = 0; i < parameters.Count; i++)
             {
+                if (i != 0)
+                    _translationBuilder.Append(", ");
                 WriteExpression(parameters[i]);
             }
         }
@@ -271,7 +373,7 @@ namespace MetaCompiler
             for (int i = 0; i < members.Count; i++)
             {
                 _translationBuilder.Append(".");
-                var member = MetaTranslator.TranslateSyntaxToken(members[i].Kind);
+                var member = MetaTranslator.TranslateSyntax(members[i]);
                 _translationBuilder.Append(member);
             }
         }

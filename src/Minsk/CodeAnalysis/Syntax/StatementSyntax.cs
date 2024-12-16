@@ -1,10 +1,18 @@
+using System;
+using System.Collections.Generic;
+
 namespace Minsk.CodeAnalysis.Syntax
 {
     public abstract class StatementSyntax : SyntaxNode
     {
-        private protected StatementSyntax(SyntaxTree syntaxTree)
+        protected StatementSyntax(SyntaxTree syntaxTree)
             : base(syntaxTree)
         {
+        }
+
+        public override IEnumerable<SyntaxNode> GetChildren()
+        {
+            return Array.Empty<SyntaxNode>();
         }
     }
 }

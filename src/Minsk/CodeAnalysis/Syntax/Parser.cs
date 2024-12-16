@@ -123,7 +123,7 @@ namespace Minsk.CodeAnalysis.Syntax
 
         private MemberSyntax GetDeclarationType()
         {
-            for (int i = 1; i < 5; i++)
+            for (int i = 1; i < 8; i++)
             {
                 SyntaxToken peek = Peek(i);
 
@@ -191,8 +191,10 @@ namespace Minsk.CodeAnalysis.Syntax
         {
             //var functionKeyword = MatchToken(SyntaxKind.FunctionKeyword);
             var access = ParseOptionAccessModifier();
+            NextToken();
             var type = ParseOptionalTypeClause();
             var functionKeyword = MatchFunctionDeclarationToken();
+
             var identifier = MatchToken(SyntaxKind.IdentifierToken);
             var openParenthesisToken = MatchToken(SyntaxKind.OpenParenthesisToken);
             var parameters = ParseParameterList();
@@ -230,7 +232,6 @@ namespace Minsk.CodeAnalysis.Syntax
         private ParameterSyntax ParseParameter()
         {
             var type = ParseTypeClause();
-            NextToken();
             var identifier = MatchToken(SyntaxKind.IdentifierToken);
             return new ParameterSyntax(_syntaxTree, identifier, type);
         }
@@ -330,17 +331,16 @@ namespace Minsk.CodeAnalysis.Syntax
 
         private AdditionalTypeSyntax? ParseOptionalAdditionalType()
         {
-            NextToken();
             if (Current.Kind != SyntaxKind.LessToken)
             {
                 return null;
             }
             var done = false;
             List<SyntaxNode> types = new List<SyntaxNode>();
-            NextToken();
 
             while (!done)
             {
+                NextToken();
                 var type = Current.Kind;
                 var node = new SyntaxToken(_syntaxTree, type, Current.Position, "", "", Current.LeadingTrivia, Current.TrailingTrivia);
                 types.Add(node);
@@ -392,12 +392,28 @@ namespace Minsk.CodeAnalysis.Syntax
             }
         }
 
+        private bool MatchArrayType()
+        {
+            NextToken();
+            if (Current.Kind == SyntaxKind.OpenSquareBracket)
+            {
+                NextToken();
+                if (Current.Kind == SyntaxKind.CloseSquareBracket)
+                {
+                    NextToken();
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private TypeClauseSyntax ParseTypeClause()
         {
             //var identifier = MatchToken(SyntaxKind.IdentifierToken);
             var identifier = MatchTypeClauseToken();
+            var listMark = MatchArrayType();
             var colonToken = MatchToken(SyntaxKind.ColonToken);
-            return new TypeClauseSyntax(_syntaxTree, colonToken, identifier);
+            return new TypeClauseSyntax(_syntaxTree, colonToken, identifier, listMark);
         }
 
         private StatementSyntax ParseIfStatement()
@@ -439,13 +455,14 @@ namespace Minsk.CodeAnalysis.Syntax
         private StatementSyntax ParseForStatement()
         {
             var keyword = MatchToken(SyntaxKind.ForKeyword);
-            var identifier = MatchToken(SyntaxKind.IdentifierToken);
-            var equalsToken = MatchToken(SyntaxKind.EqualsToken);
-            var lowerBound = ParseExpression();
-            var toKeyword = MatchToken(SyntaxKind.ToKeyword);
-            var upperBound = ParseExpression();
+            var openParenthesis = MatchToken(SyntaxKind.OpenParenthesisToken);
+            var declaration = ParseVariableDeclaration();
+            var condition = ParseExpression();
+            var modifier = ParseExpression();
+            NextToken();
+            MatchToken(SyntaxKind.CloseParenthesisToken);
             var body = ParseStatement();
-            return new ForStatementSyntax(_syntaxTree, keyword, identifier, equalsToken, lowerBound, toKeyword, upperBound, body);
+            return new ForStatementSyntax(_syntaxTree, keyword, declaration, condition, modifier, body);
         }
 
         private StatementSyntax ParseBreakStatement()
@@ -500,6 +517,12 @@ namespace Minsk.CodeAnalysis.Syntax
                         var operatorToken = NextToken();
                         var right = ParseAssignmentExpression();
                         return new AssignmentExpressionSyntax(_syntaxTree, identifierToken, operatorToken, right);
+
+                    case SyntaxKind.PlusPlusToken:
+                    case SyntaxKind.MinusMinusToken:
+                        var idToken = NextToken();
+                        var operatorT = NextToken();
+                        return new SingleExpressionSyntax(_syntaxTree, idToken, operatorT);
                 }
             }
             return ParseBinaryExpression();
@@ -584,28 +607,116 @@ namespace Minsk.CodeAnalysis.Syntax
             return new LiteralExpressionSyntax(_syntaxTree, stringToken);
         }
 
+        private bool IsTypeSyntaxToken(SyntaxToken token)
+        {
+            switch (token.Kind)
+            {
+                case SyntaxKind.IntKeyword:
+                case SyntaxKind.FloatKeyword:
+                case SyntaxKind.StringKeyword:
+                case SyntaxKind.VarKeyword:
+                case SyntaxKind.LetKeyword:
+                case SyntaxKind.DictionaryKeyword:
+                case SyntaxKind.ListKeyword:
+                case SyntaxKind.DoubleKeyword:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
         private ExpressionSyntax ParseNameOrCallExpression()
         {
-            if (Peek(0).Kind == SyntaxKind.IdentifierToken && (Peek(1).Kind == SyntaxKind.OpenParenthesisToken || Peek(1).Kind == SyntaxKind.PeriodToken))
+            var peek = Peek(0);
+            if (peek.Kind == SyntaxKind.NewKeyword)
+                return ParseNewExpression();
+
+            if (peek.Kind == SyntaxKind.IdentifierToken && Peek(1).Kind == SyntaxKind.OpenParenthesisToken)
                 return ParseCallExpression();
+
+            if (IsTypeSyntaxToken(peek) && Peek(1).Kind == SyntaxKind.OpenSquareBracket)
+                return ParseArrayDeclarationExpression();
+
+            if (IsTypeSyntaxToken(peek) && (Peek(1).Kind == SyntaxKind.LessToken || Peek(1).Kind == SyntaxKind.OpenParenthesisToken))
+                return ParseVariableDeclrationExpression();
+
+            if (Peek(1).Kind == SyntaxKind.OpenSquareBracket)
+                return ParseArrayAccessExpression();
+
+            if (peek.Kind == SyntaxKind.IdentifierToken && Peek(1).Kind == SyntaxKind.PeriodToken)
+            {
+                if (peek.TrailingTrivia.Length > 0)
+                {
+                    if (peek.TrailingTrivia[0].Kind == SyntaxKind.WhitespaceTrivia ||
+                        peek.TrailingTrivia[0].Kind == SyntaxKind.LineBreakTrivia ||
+                        peek.TrailingTrivia[0].Kind == SyntaxKind.EndOfFileToken)
+                        return ParseNameExpression();
+                }
+
+                int d = 1;
+                while (d < 7)
+                {
+                    if (Peek(d).Kind == SyntaxKind.OpenParenthesisToken)
+                        return ParseCallExpression();
+
+                    if (Peek(d).Kind == SyntaxKind.OpenSquareBracket)
+                        return ParseArrayAccessExpression();
+
+                    d++;
+                }
+                return ParseNameExpression();
+            }
 
             return ParseNameExpression();
         }
 
-        private SeparatedSyntaxList<SyntaxToken>? ParseInnerMembers()
+        private ExpressionSyntax ParseVariableDeclrationExpression()
+        {
+            var typeClause = ParseOptionalTypeClause();
+            var additionalTypes = ParseOptionalAdditionalType();
+            NextToken();
+            MatchToken(SyntaxKind.OpenParenthesisToken);
+            MatchToken(SyntaxKind.CloseParenthesisToken);
+            return new VariableDeclarationExpression(_syntaxTree, typeClause, additionalTypes);
+        }
+
+        private ExpressionSyntax ParseArrayDeclarationExpression()
+        {
+            var type = MatchTypeClauseToken();
+            NextToken();
+            var openBracket = MatchToken(SyntaxKind.OpenSquareBracket);
+            var expression = ParseExpression();
+            var closeBracket = MatchToken(SyntaxKind.CloseSquareBracket);
+            return new ArrayDeclarationExpression(_syntaxTree, type, openBracket, expression, closeBracket);
+        }
+
+        private ExpressionSyntax ParseArrayAccessExpression()
+        {
+            var identifier = MatchToken(SyntaxKind.IdentifierToken);
+            var members = ParseInnerMembers();
+            var openBracket = MatchToken(SyntaxKind.OpenSquareBracket);
+            var expression = ParseExpression();
+            var closeBracket = MatchToken(SyntaxKind.CloseSquareBracket);
+            return new ArrayAccessExpression(_syntaxTree, identifier, openBracket, expression, members, closeBracket);
+        }
+
+        private ExpressionSyntax ParseNewExpression()
+        {
+            var newKeyword = MatchToken(SyntaxKind.NewKeyword);
+            var expression = ParseExpression();
+            return new NewExpressionSyntax(_syntaxTree, newKeyword, expression);
+        }
+
+        private SeparatedSyntaxList<SyntaxToken> ParseInnerMembers()
         {
             var innerMembers = new List<SyntaxNode>();
             while (Current.Kind == SyntaxKind.PeriodToken)
             {
                 NextToken();
                 innerMembers.Add(Current);
+                NextToken();
             }
-
-            if (innerMembers is null)
-            {
-                return null;
-            }
-            NextToken();
 
             return new SeparatedSyntaxList<SyntaxToken>(innerMembers.ToImmutableArray());
         }
@@ -649,7 +760,8 @@ namespace Minsk.CodeAnalysis.Syntax
         private ExpressionSyntax ParseNameExpression()
         {
             var identifierToken = MatchToken(SyntaxKind.IdentifierToken);
-            return new NameExpressionSyntax(_syntaxTree, identifierToken);
+            var members = ParseInnerMembers();
+            return new NameExpressionSyntax(_syntaxTree, identifierToken, members);
         }
     }
 }

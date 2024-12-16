@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace Minsk.CodeAnalysis.Syntax
 {
     public sealed partial class FunctionDeclarationSyntax : MemberSyntax
@@ -24,5 +27,10 @@ namespace Minsk.CodeAnalysis.Syntax
         public SyntaxToken CloseParenthesisToken { get; }
         public TypeClauseSyntax? Type { get; }
         public BlockStatementSyntax Body { get; }
+
+        public override IEnumerable<SyntaxNode> GetChildren()
+        {
+            return Array.Empty<SyntaxNode>();
+        }
     }
 }

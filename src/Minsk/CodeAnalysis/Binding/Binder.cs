@@ -292,24 +292,34 @@ namespace Minsk.CodeAnalysis.Binding
             {
                 case SyntaxKind.BlockStatement:
                     return BindBlockStatement((BlockStatementSyntax)syntax);
+
                 case SyntaxKind.VariableDeclaration:
                     return BindVariableDeclaration((VariableDeclarationSyntax)syntax);
+
                 case SyntaxKind.IfStatement:
                     return BindIfStatement((IfStatementSyntax)syntax);
+
                 case SyntaxKind.WhileStatement:
                     return BindWhileStatement((WhileStatementSyntax)syntax);
+
                 case SyntaxKind.DoWhileStatement:
                     return BindDoWhileStatement((DoWhileStatementSyntax)syntax);
+
                 case SyntaxKind.ForStatement:
                     return BindForStatement((ForStatementSyntax)syntax);
+
                 case SyntaxKind.BreakStatement:
                     return BindBreakStatement((BreakStatementSyntax)syntax);
+
                 case SyntaxKind.ContinueStatement:
                     return BindContinueStatement((ContinueStatementSyntax)syntax);
+
                 case SyntaxKind.ReturnStatement:
                     return BindReturnStatement((ReturnStatementSyntax)syntax);
+
                 case SyntaxKind.ExpressionStatement:
                     return BindExpressionStatement((ExpressionStatementSyntax)syntax);
+
                 default:
                     throw new Exception($"Unexpected syntax {syntax.Kind}");
             }
@@ -398,17 +408,18 @@ namespace Minsk.CodeAnalysis.Binding
 
         private BoundStatement BindForStatement(ForStatementSyntax syntax)
         {
-            var lowerBound = BindExpression(syntax.LowerBound, TypeSymbol.Int);
-            var upperBound = BindExpression(syntax.UpperBound, TypeSymbol.Int);
+            //var lowerBound = BindExpression(syntax.LowerBound, TypeSymbol.Int);
+            //var upperBound = BindExpression(syntax.UpperBound, TypeSymbol.Int);
 
-            _scope = new BoundScope(_scope);
+            //_scope = new BoundScope(_scope);
 
-            var variable = BindVariableDeclaration(syntax.Identifier, isReadOnly: true, TypeSymbol.Int);
-            var body = BindLoopBody(syntax.Body, out var breakLabel, out var continueLabel);
+            //var variable = BindVariableDeclaration(syntax.Identifier, isReadOnly: true, TypeSymbol.Int);
+            //var body = BindLoopBody(syntax.Body, out var breakLabel, out var continueLabel);
 
-            _scope = _scope.Parent!;
+            //_scope = _scope.Parent!;
 
-            return new BoundForStatement(syntax, variable, lowerBound, upperBound, body, breakLabel, continueLabel);
+            //return new BoundForStatement(syntax, variable, lowerBound, upperBound, body, breakLabel, continueLabel);
+            return default;
         }
 
         private BoundStatement BindLoopBody(StatementSyntax body, out BoundLabel breakLabel, out BoundLabel continueLabel)
@@ -514,18 +525,25 @@ namespace Minsk.CodeAnalysis.Binding
             {
                 case SyntaxKind.ParenthesizedExpression:
                     return BindParenthesizedExpression((ParenthesizedExpressionSyntax)syntax);
+
                 case SyntaxKind.LiteralExpression:
                     return BindLiteralExpression((LiteralExpressionSyntax)syntax);
+
                 case SyntaxKind.NameExpression:
                     return BindNameExpression((NameExpressionSyntax)syntax);
+
                 case SyntaxKind.AssignmentExpression:
                     return BindAssignmentExpression((AssignmentExpressionSyntax)syntax);
+
                 case SyntaxKind.UnaryExpression:
                     return BindUnaryExpression((UnaryExpressionSyntax)syntax);
+
                 case SyntaxKind.BinaryExpression:
                     return BindBinaryExpression((BinaryExpressionSyntax)syntax);
+
                 case SyntaxKind.CallExpression:
                     return BindCallExpression((CallExpressionSyntax)syntax);
+
                 default:
                     throw new Exception($"Unexpected syntax {syntax.Kind}");
             }
@@ -723,7 +741,7 @@ namespace Minsk.CodeAnalysis.Binding
             var name = identifier.Text ?? "?";
             var declare = !identifier.IsMissing;
             var variable = _function == null
-                                ? (VariableSymbol) new GlobalVariableSymbol(name, isReadOnly, type, constant)
+                                ? (VariableSymbol)new GlobalVariableSymbol(name, isReadOnly, type, constant)
                                 : new LocalVariableSymbol(name, isReadOnly, type, constant);
 
             if (declare && !_scope.TryDeclareVariable(variable))
@@ -756,12 +774,16 @@ namespace Minsk.CodeAnalysis.Binding
             {
                 case "any":
                     return TypeSymbol.Any;
+
                 case "bool":
                     return TypeSymbol.Bool;
+
                 case "int":
                     return TypeSymbol.Int;
+
                 case "string":
                     return TypeSymbol.String;
+
                 default:
                     return null;
             }

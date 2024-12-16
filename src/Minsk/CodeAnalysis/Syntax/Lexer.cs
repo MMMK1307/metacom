@@ -81,6 +81,7 @@ namespace Minsk.CodeAnalysis.Syntax
                     case '\0':
                         done = true;
                         break;
+
                     case '/':
                         if (Lookahead == '/')
                         {
@@ -95,16 +96,19 @@ namespace Minsk.CodeAnalysis.Syntax
                             done = true;
                         }
                         break;
+
                     case '\n':
                     case '\r':
                         if (!leading)
                             done = true;
                         ReadLineBreak();
                         break;
+
                     case ' ':
                     case '\t':
                         ReadWhiteSpace();
                         break;
+
                     default:
                         if (char.IsWhiteSpace(Current))
                             ReadWhiteSpace();
@@ -150,6 +154,7 @@ namespace Minsk.CodeAnalysis.Syntax
                     case '\n':
                         done = true;
                         break;
+
                     default:
                         if (!char.IsWhiteSpace(Current))
                             done = true;
@@ -161,7 +166,6 @@ namespace Minsk.CodeAnalysis.Syntax
 
             _kind = SyntaxKind.WhitespaceTrivia;
         }
-
 
         private void ReadSingleLineComment()
         {
@@ -177,6 +181,7 @@ namespace Minsk.CodeAnalysis.Syntax
                     case '\n':
                         done = true;
                         break;
+
                     default:
                         _position++;
                         break;
@@ -201,6 +206,7 @@ namespace Minsk.CodeAnalysis.Syntax
                         _diagnostics.ReportUnterminatedMultiLineComment(location);
                         done = true;
                         break;
+
                     case '*':
                         if (Lookahead == '/')
                         {
@@ -209,6 +215,7 @@ namespace Minsk.CodeAnalysis.Syntax
                         }
                         _position++;
                         break;
+
                     default:
                         _position++;
                         break;
@@ -229,8 +236,14 @@ namespace Minsk.CodeAnalysis.Syntax
                 case '\0':
                     _kind = SyntaxKind.EndOfFileToken;
                     break;
+
                 case '+':
                     _position++;
+                    if (Current == '+')
+                    {
+                        _kind = SyntaxKind.PlusPlusToken;
+                        break;
+                    }
                     if (Current != '=')
                     {
                         _kind = SyntaxKind.PlusToken;
@@ -241,8 +254,14 @@ namespace Minsk.CodeAnalysis.Syntax
                         _position++;
                     }
                     break;
+
                 case '-':
                     _position++;
+                    if (Current == '-')
+                    {
+                        _kind = SyntaxKind.MinusMinusToken;
+                        break;
+                    }
                     if (Current != '=')
                     {
                         _kind = SyntaxKind.MinusToken;
@@ -253,6 +272,7 @@ namespace Minsk.CodeAnalysis.Syntax
                         _position++;
                     }
                     break;
+
                 case '*':
                     _position++;
                     if (Current != '=')
@@ -265,6 +285,7 @@ namespace Minsk.CodeAnalysis.Syntax
                         _position++;
                     }
                     break;
+
                 case '/':
                     _position++;
                     if (Current != '=')
@@ -277,46 +298,57 @@ namespace Minsk.CodeAnalysis.Syntax
                         _position++;
                     }
                     break;
+
                 case '(':
                     _kind = SyntaxKind.OpenParenthesisToken;
                     _position++;
                     break;
+
                 case ')':
                     _kind = SyntaxKind.CloseParenthesisToken;
                     _position++;
                     break;
+
                 case '{':
                     _kind = SyntaxKind.OpenBraceToken;
                     _position++;
                     break;
+
                 case '}':
                     _kind = SyntaxKind.CloseBraceToken;
                     _position++;
                     break;
+
                 case '[':
                     _kind = SyntaxKind.OpenSquareBracket;
                     _position++;
                     break;
+
                 case '.':
                     _kind = SyntaxKind.PeriodToken;
                     _position++;
                     break;
+
                 case ']':
                     _kind = SyntaxKind.CloseSquareBracket;
                     _position++;
                     break;
+
                 case ':':
                     _kind = SyntaxKind.ColonToken;
                     _position++;
                     break;
+
                 case ',':
                     _kind = SyntaxKind.CommaToken;
                     _position++;
                     break;
+
                 case '~':
                     _kind = SyntaxKind.TildeToken;
                     _position++;
                     break;
+
                 case '^':
                     _position++;
                     if (Current != '=')
@@ -329,6 +361,7 @@ namespace Minsk.CodeAnalysis.Syntax
                         _position++;
                     }
                     break;
+
                 case '&':
                     _position++;
                     if (Current == '&')
@@ -346,6 +379,7 @@ namespace Minsk.CodeAnalysis.Syntax
                         _kind = SyntaxKind.AmpersandToken;
                     }
                     break;
+
                 case '|':
                     _position++;
                     if (Current == '|')
@@ -363,6 +397,7 @@ namespace Minsk.CodeAnalysis.Syntax
                         _kind = SyntaxKind.PipeToken;
                     }
                     break;
+
                 case '=':
                     _position++;
                     if (Current != '=')
@@ -375,6 +410,7 @@ namespace Minsk.CodeAnalysis.Syntax
                         _position++;
                     }
                     break;
+
                 case '!':
                     _position++;
                     if (Current != '=')
@@ -387,6 +423,7 @@ namespace Minsk.CodeAnalysis.Syntax
                         _position++;
                     }
                     break;
+
                 case '<':
                     _position++;
                     if (Current != '=')
@@ -399,6 +436,7 @@ namespace Minsk.CodeAnalysis.Syntax
                         _position++;
                     }
                     break;
+
                 case '>':
                     _position++;
                     if (Current != '=')
@@ -411,9 +449,11 @@ namespace Minsk.CodeAnalysis.Syntax
                         _position++;
                     }
                     break;
+
                 case '"':
                     ReadString();
                     break;
+
                 case '0':
                 case '1':
                 case '2':
@@ -426,9 +466,11 @@ namespace Minsk.CodeAnalysis.Syntax
                 case '9':
                     ReadNumber();
                     break;
+
                 case '_':
                     ReadIdentifierOrKeyword();
                     break;
+
                 default:
                     if (char.IsLetter(Current))
                     {
@@ -465,6 +507,7 @@ namespace Minsk.CodeAnalysis.Syntax
                         _diagnostics.ReportUnterminatedString(location);
                         done = true;
                         break;
+
                     case '"':
                         if (Lookahead == '"')
                         {
@@ -477,6 +520,7 @@ namespace Minsk.CodeAnalysis.Syntax
                             done = true;
                         }
                         break;
+
                     default:
                         sb.Append(Current);
                         _position++;

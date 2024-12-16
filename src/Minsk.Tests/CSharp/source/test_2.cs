@@ -1,18 +1,30 @@
-public int[] TwoSum(int[] nums, int target)
+public double FindMedianSortedArrays(int[] nums1, int[] nums2)
+{
+    List<int> merged = new List<int>();
+    int i = 0, j = 0;
+
+    while (i < nums1.Length && j < nums2.Length)
     {
-
-        if (nums == null || nums.Length < 2)
-            return new int[2];
-
-        Dictionary<int, int> dic = new Dictionary<int, int>();
-
-        for (int i = 0; i < nums.Length; i++)
+        if (nums1[i] < nums2[j])
         {
-            if (dic.ContainsKey(target - nums[i]))
-                return new int[] { i, dic[target - nums[i]] };
-            else if (!dic.ContainsKey(nums[i]))
-                dic.Add(nums[i], i);
+            merged.Add(nums1[i++]);
         }
-
-        return new int[2];
+        else
+        {
+            merged.Add(nums2[j++]);
+        }
     }
+
+    while (i < nums1.Length) merged.Add(nums1[i++]);
+    while (j < nums2.Length) merged.Add(nums2[j++]);
+
+    int mid = merged.Count / 2;
+    if (merged.Count % 2 == 0)
+    {
+        return (merged[mid - 1] + merged[mid]) / 2.0;
+    }
+    else
+    {
+        return merged[mid];
+    }
+}
